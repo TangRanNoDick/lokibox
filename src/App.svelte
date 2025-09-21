@@ -8,6 +8,8 @@
     deployAutoClicker,
     clearAutoClicker,
     shortcutStore,
+    killAuraRangeStore,
+    toggleKillAura,
   } from "./func";
   import Menu from "./components/Menu.svelte";
   import { GM_getValue, GM_setValue } from "$";
@@ -27,14 +29,20 @@
     autoClickKey: number;
     deployAutoClicker: () => void;
     clearAutoClicker: () => void;
+    killAuraRange: number;
+    toggleKillAura: () => void;
   };
   const propertiesSettings: PropertiesSettings = {
     jetPackSpeed: GM_getValue("jetPackSpeed", 1.5),
     autoClickInterval: 200,
     autoClickKey: 6,
+    killAuraRange: GM_getValue("killAuraRange", 5),
     deployAutoClicker: function () {
       clearAutoClicker();
       deployAutoClicker(this.autoClickInterval, this.autoClickKey);
+    },
+    toggleKillAura: function () {
+      toggleKillAura();
     },
     clearAutoClicker,
   };
@@ -129,6 +137,18 @@
         }
       });
 
+      const killAuraMenu = propertiesMenu.addFolder("KillAura");
+      killAuraMenu
+        .add(propertiesSettings, "killAuraRange", 1, 20, 1)
+        .name("Range")
+        .onChange((v: number) => {
+          GM_setValue("killAuraRange", v);
+          killAuraRangeStore.set(v);
+        });
+      killAuraMenu
+        .add(propertiesSettings, "toggleKillAura")
+        .name("Toggle KillAura (K)");
+
       shortcutMenu
         //@ts-ignore
         .add(shortcut, "openMenu")
@@ -139,6 +159,12 @@
         //@ts-ignore
         .add(shortcut, "jetPack")
         .name("JetPack")
+        .onChange(updateShortcut);
+      
+      shortcutMenu
+        //@ts-ignore
+        .add(shortcut, "killAura")
+        .name("KillAura")
         .onChange(updateShortcut);
 
       function updateShortcut() {
